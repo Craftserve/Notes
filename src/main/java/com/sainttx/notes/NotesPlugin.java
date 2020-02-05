@@ -40,6 +40,7 @@ public class NotesPlugin extends JavaPlugin {
      * Key representing amount of money in the item
      */
     private NamespacedKey amountKey;
+    private NamespacedKey oldAmountKey;
 
     /*
      * Vault economy implementation
@@ -63,6 +64,7 @@ public class NotesPlugin extends JavaPlugin {
         getCommand("banknotes").setExecutor(new BanknotesCommand(this));
 
         amountKey = new NamespacedKey(this, "amount");
+        oldAmountKey = new NamespacedKey("banknotes", amountKey.getKey());
 
         // Load economy a tick later
         getServer().getScheduler().runTask(this, new Runnable() {
@@ -190,8 +192,11 @@ public class NotesPlugin extends JavaPlugin {
      * @return True if the item represents a note, false otherwise
      */
     public boolean isBanknote(ItemStack itemstack) {
-        if (itemstack.hasItemMeta() && itemstack.getItemMeta().getPersistentDataContainer().has(amountKey, PersistentDataType.DOUBLE)) {
-            return true;
+        if (itemstack.hasItemMeta()) {
+            PersistentDataContainer container = itemstack.getItemMeta().getPersistentDataContainer();
+            if (container.has(amountKey, PersistentDataType.DOUBLE) || container.has(oldAmountKey, PersistentDataType.DOUBLE)) {
+                return true;
+            }
         }
         return isBanknoteLegacy(itemstack);
     }
@@ -227,6 +232,8 @@ public class NotesPlugin extends JavaPlugin {
             PersistentDataContainer container = itemstack.getItemMeta().getPersistentDataContainer();
             if (container.has(amountKey, PersistentDataType.DOUBLE)) {
                 return container.get(amountKey, PersistentDataType.DOUBLE);
+            } else if (container.has(oldAmountKey, PersistentDataType.DOUBLE)) {
+                return container.get(oldAmountKey, PersistentDataType.DOUBLE);
             }
         }
         return getBanknoteAmountLegacy(itemstack);
